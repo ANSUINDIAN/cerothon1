@@ -132,8 +132,17 @@ def summarize_columns(df,col):
                                np.percentile(col_data,99)
                                ]
     elif col in df.select_dtypes(include=['object','category']).columns:
-        pass
+        summary_df = pd.DataFrame(columns=['Unique Values','Mode','Mode Count'])
+        if col in df.select_dtypes(include=['object','category']).columns:
+            col_data = df[col]
+            unique_values = col_data.unique()
+            mode = col_data.mode()[0]
+            mode_count = col_data.value_counts()[mode]
 
+            summary_df.loc[col] = [len(unique_values), mode, mode_count]
+
+
+    st.write(summary_df)
 
 
 def main():
@@ -165,7 +174,7 @@ def main():
 
     if option == "Insights":
         st.sidebar.subheader('Page of Insights')
-        insight = st.sidebar.selectbox("Select Option",['Missing value','Shape','Data Info',' Column Type Info','Correlation','Value Count','Summarize columns','Univariate plot','Bivariate plot'])
+        insight = st.sidebar.selectbox("Select Option",['Missing value','Shape','Data Info','Column Type Info','Correlation','Value Count','Summarize columns','Univariate plot','Bivariate plot'])
         if insight == 'Missing value':
             if session_state.data is not None:
                 st.subheader("Missing values")
@@ -183,15 +192,18 @@ def main():
 
 
         elif insight == 'Column Type Info':
-            if session_state.data is not None:
+            if session_state.data is not None and not session_state.data.empty:
+                st.subheader("Column Type Info")
                 data_table = create_datatypes_table(session_state.data)
-                # st.write("Column Types:")
-                # st.write(data_table)
-        elif insight == 'summarize columns':
-            if session_state is not None:
-                column1 = st.selectbox('Select one from the option',session_state.data)
-                pass
+                st.write("Column Types:")
+                st.write(data_table)
+            else:
+                st.warning("Please upload the dataset first or the dataset is empty")
 
+        elif insight == 'Summarize columns':
+            if session_state.data is not None:
+                column1 = st.selectbox('Select one from the option',session_state.data.columns)
+                summarize_columns(session_state.data, column1)
 
         elif insight == 'Correlation':
             if session_state.data is not None:
